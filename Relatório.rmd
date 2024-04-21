@@ -1,0 +1,239 @@
+---
+title: "Adenocarcinoma prostático"
+author: "Diogo Esteves (PG28935)"
+output:
+  html_document: default
+  pdf_document: default
+---
+<style>
+  p {
+    text-align: justify;
+  }
+</style>
+
+# Exploração inicial dos dados e análise de expressão diferencial e de enriquecimento
+
+```{r,echo=FALSE,results='hide', warning=FALSE, message=FALSE}
+#install.packages("jpeg")
+#install.packages("TCGAbiolinks")
+#install.packages("Biobase")
+#install.packages("DESeq2")
+#install.packages("ggbeeswarm")
+#install.packages("genefilter")
+#install.packages("pheatmap")
+#install.packages("org.Hs.eg.db")
+#install.packages("fgsea")
+#install.packages("ggplot2")
+#install.packages("xfun")
+#install.packages("SummarizedExperiment") 
+#install.packages("factoextra")
+#install.packages("Rtsne")
+#install.packages("EBImage")
+```
+
+```{r,echo=FALSE,results='hide', warning = FALSE, message=FALSE,warning = FALSE, message=FALSE}
+#library("jpeg")
+#library("DESeq2")
+#library("Biobase")
+#library("DESeq2")
+#library("ggbeeswarm")
+#library("pheatmap")
+#library("org.Hs.eg.db")
+#library("fgsea")
+#library("ggplot2")
+#library("factoextra")
+#library("limma")
+#library("genefilter")
+#library("SummarizedExperiment")
+#library("Rtsne")
+#library("party")
+#library("rpart")
+#library("caret") 
+#library("rsample")
+
+```
+
+## Introdução
+O cancro da próstata é um tipo comum de cancro que afeta pessoas do sexo masculino, incidindo sobre a glândula da próstata e provocando dificuldades urinárias. O diagnóstico envolve exames de PSA e biópsia da próstata. O tratamento pode incluir cirurgia, radioterapia, terapia hormonal ou quimioterapia. O adenocarcinoma é o tipo mais comum de cancro da próstata, originando-se nas células glandulares. Quando diagnosticado numa fase inicial, apresenta uma taxa de sobrevivência de 98%, contrastando com apenas 30% numa fase avançada.
+
+## Origem dos dados
+Os dados analisados neste trabalho provêm do projeto Pan-Cancer Atlas (TCGA), uma colaboração em larga escala apoiada pelo National Cancer Institute (NCI) e pelo National Human Genome Research Institute (NHGRI). Serão analisadas 494 amostras de mais de 11.000 tumores de 33 tipos diferentes de cancro, obtidas através de diversas técnicas que examinam alterações moleculares a vários níveis, incluindo DNA, RNA, proteínas e epigenética. A análise destes perfis moleculares visa identificar padrões comuns, diferenças e temas emergentes entre os diferentes tipos de cancro, contribuindo para o desenvolvimento de tratamentos mais eficazes e personalizados.
+
+## Extração dos dados de transcriptómica e respetivos metadados da base de dados
+
+Para analisar dados de transcriptómica do adenocarcinoma da próstata, foi extraída informação do cBioPortal usando o pacote TCGAbiolinks. Este método permite aceder aos dados do The Genomic Data Commons (GDC), suportando a análise de dados genómicos, clínicos e de biospecimens de programas de investigação sobre cancro.
+
+```{r,results= 'markup'}
+library(TCGAbiolinks)
+query_PRAD <- GDCquery(
+  project = "TCGA-PRAD",
+  data.category = "Transcriptome Profiling", 
+  data.type = "Gene Expression Quantification",
+  workflow.type = "HTSeq - Counts"
+)
+
+GDCdownload(query = query_PRAD)
+
+rna_seq_PRAD <- GDCprepare(query = query_PRAD, save = TRUE, save.filename = "mRNA_TCGA-PRAD.rda") 
+```
+```{r, data_verify}
+# Verificação dos dados
+class(rna_seq_PRAD)
+dim(rna_seq_PRAD)
+
+# Exibir os primeiros registros de metadados
+head(colData(rna_seq_PRAD))
+```
+
+A função GDCquery() é utilizada para realizar a query à base dados. Nesta função são definidos vários parâmetros que permitem filtrar o data set que posteriormente vai ser descarregado. O parâmetro "project" corresponde ao id atribuído ao tipo de cancro de modo a apenas considerar a informação disponível referente ao carcinoma endométrio do corpo uterino. A "data.category" é usado para especificar a categoria de dados que se pretende selecionar, neste caso, como pretendemos realizar a análise da transcriptómica selecionou-se a categoria "Transcriptome Profiling" para selecionar os dados relacionados com o perfil de expressão de genes. De entre os dados do perfil de expressão de genes restringiu-se apenas aos dados referentes à quantificação da expressão de genes definindo "data.type" como Gene expression quantification. Por fim, indicou-se o tipo de análise da expressão genética desejada, optando-se por recorrer ao START-Counts. Este workflow indica que o algoritmo utilizado para a contagem da expressão genética a partir do alinhamento das sequências foi realizada com a ferramenta STAR.
+
+A função GDCdownload() é utilizada para realizar o download dos dados consoante a query realizada e estabelecida na função anterior
+
+```{r, GDC}
+#retorna a classe do objeto (tipo de dados ou a estrutura de dados que o objeto 
+#representa, o que por sua vez determina quais funções podem ser aplicadas a ele)
+class(rna_seq_PRAD)
+#retorna as dimensões do objeto(matriz ou um dataframe;objeto mais complexo)
+dim(rna_seq_PRAD)
+
+#extrair componentes de um objeto por nome (através de colunas)
+rna_seq_PRAD$paper_BCR
+rna_seq_PRAD$paper_Gender
+rna_seq_PRAD$paper_Grade
+
+#atribui a um novo objeto chamado meta_PRAD, os metadados associados ao conjunto 
+#de dados rna_seq_PRAD
+meta_PRAD = colData(rna_seq_PRAD)
+#retorna as dimensões dos metadados 
+dim(meta_PRAD)
+#extrair componentes de um objeto por nome (através de colunas)
+meta_PRAD$patient
+meta_PRAD$paper_IDH.status
+```
+
+## Análise de Expressão Diferencial com DESeq2
+A análise de expressão diferencial é crucial para entender as mudanças na expressão gênica entre diferentes condições ou tratamentos. O pacote DESeq2 é amplamente utilizado para esta análise em dados de contagem de sequenciamento de RNA.
+
+```{r, deseq2}
+# Preparação dos dados para DESeq2
+library(DESeq2)
+data_de <- rna_seq_PRAD # Assumindo que 'rna_seq_PRAD' já é um objeto apropriado
+
+# Criação de um DESeqDataSet
+ddsSE <- DESeqDataSetFromMatrix(countData = counts(data_de), 
+                                colData = colData(data_de), 
+                                design = ~ condition) # Altere 'condition' pelo seu fator de interesse
+# Análise de DESeq2
+ddsSE <- DESeq(ddsSE)
+results <- results(ddsSE)
+
+# Exibição dos resultados
+head(results)
+```
+
+## Processamento de Dados Clínicos com TCGAbiolinks
+Dados clínicos são essenciais para complementar as análises genômicas, permitindo uma compreensão mais aprofundada das características dos pacientes e das amostras analisadas.
+
+```{r, TCGAbiolinks}
+
+#buscar dados clínicos do projeto TCGA-PRAD (adenocarcinoma prostático), 
+#especificamente suplementos clínicos, através de GDCquery
+query_clin <- GDCquery(project = "TCGA-PRAD", 
+                       data.category = "Clinical",
+                       data.type = "Clinical Supplement",
+                       data.format = "BCR Biotab")
+
+GDCdownload(query_clin)
+clinical.PRAD <- GDCprepare(query_clin)
+
+# Verificar os dados clínicos disponíveis
+head(clinical.PRAD)
+
+
+```
+
+## Análise Adicional com Dados Clínicos e de Amostra (Afonso- foi revisto para nao "alterar" o html, sem tempo para mais...)
+
+```{r, include=FALSE}
+# Checa se o ggplot2 está instalado, senão, instala
+if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  install.packages("ggplot2")
+}
+library(ggplot2)
+```
+
+Carregamento e limpeza dos dados clínicos e de amostra:
+
+```{r}
+# Carrega dados de um arquivo de texto em um formato de dataframe.
+dados_sample <- read.delim("C:/Users/armin/OneDrive/Ambiente de Trabalho/dataset/data_clinical_sample.txt", header = TRUE, stringsAsFactors = FALSE)
+dados_patient <- read.delim("C:/Users/armin/OneDrive/Ambiente de Trabalho/dataset/data_clinical_patient.txt", header = TRUE, stringsAsFactors = FALSE)
+
+# Criação de novos conjuntos de dados removendo as primeiras 4 linhas dos conjuntos originais.
+dados_sample_limpo <- dados_sample[-c(1:4), ]
+dados_patient_limpo <- dados_patient[-c(1:4), ]
+
+# Conversão do conjunto de dados para o tipo de dados numéricos.
+dados_patient_limpo$Overall.Survival..Months. <- as.numeric(as.character(dados_patient_limpo$Overall.Survival..Months.))
+dados_patient_limpo$Diagnosis.Age <- as.numeric(as.character(dados_patient_limpo$Diagnosis.Age))
+dados_sample_limpo$MSI.MANTIS.Score <- as.numeric(dados_sample_limpo$MSI.MANTIS.Score)
+dados_sample_limpo$TMB..nonsynonymous. <- as.numeric(dados_sample_limpo$TMB..nonsynonymous.)
+```
+Visualização inicial dos dados:
+```{r}
+# Visualizar os primeiros registros do conjunto de dados.
+head(dados_sample_limpo)
+head(dados_patient_limpo)
+
+# Obter informações sobre a estrutura do conjunto de dados.
+str(dados_sample_limpo)
+str(dados_patient_limpo)
+
+# Resumo estatístico do conjunto de dados.
+summary(dados_sample_limpo)
+summary(dados_patient_limpo)
+```
+Análise exploratória com gráficos:
+```{r}
+# Cria um gráfico de dispersão relacionando o MSI e o TMB.
+ggplot(dados_sample_limpo, aes(x = MSI.MANTIS.Score, y = TMB..nonsynonymous.)) +
+  geom_point() +
+  labs(title = "Relação entre MSI e TMB", x = "Score MSI", y = "Score TMB")
+
+# Calcular o coeficiente de correlação de Pearson.
+correlation1 <- cor(dados_sample_limpo$MSI.MANTIS.Score, dados_sample_limpo$TMB..nonsynonymous.)
+
+# Exibir o valor da correlação.
+print(correlation1)
+```
+Análise de sobrevivência e correlação:
+```{r}
+# Verificar valores únicos na coluna Overall.Survival.Status.
+unique(dados_patient_limpo$Overall.Survival.Status)
+
+# Convertendo estados de sobrevivência para numéricos.
+dados_patient_limpo$Overall.Survival.Status <- ifelse(dados_patient_limpo$Overall.Survival.Status == "LIVING", 0, 1)
+
+# Ajustar a curva de sobrevivência de Kaplan-Meier.
+library(survival)
+library(survminer)
+surv_obj <- Surv(dados_patient_limpo$Overall.Survival..Months., dados_patient_limpo$Overall.Survival.Status)
+surv_fit <- survfit(surv_obj ~ 1)
+
+# Traçar a curva de sobrevivência.
+ggsurvplot(surv_fit, data = dados_patient_limpo, risk.table = TRUE, xlab = "Tempo (Meses)", ylab = "Probabilidade de Sobrevivência", title = "Curva de Sobrevivência")
+```
+Análise de regressão linear:
+```{r}
+# Ajustar o modelo de regressão linear.
+modelo <- lm(Diagnosis.Age ~ Overall.Survival..Months., data = dados_patient_limpo)
+
+# Criar o gráfico de dispersão com a linha de regressão.
+ggplot(dados_patient_limpo, aes(x = Overall.Survival..Months., y = Diagnosis.Age)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "red") +
+  labs(title = "Gráfico de Regressão", x = "Sobrevivência Global (Meses)", y = "Idade do Diagnóstico")
+```
+
+
+
