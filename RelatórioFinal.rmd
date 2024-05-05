@@ -260,22 +260,39 @@ kmeans_result <- kmeans(dados_cluster, centers = k)
 # Verificar os resultados
 kmeans_result
 
-# Selecionar apenas as colunas relevantes para o heatmap
-dados_heatmap <- dados_patient_limpo[, c("Diagnosis.Age", "Overall.Survival..Months.")]
+# Gráfico de dispersão dos clusters
+plot(dados_cluster, col = kmeans_result$cluster, pch = 20, main = "Clusters gerados pelo K-means",
+     xlab = "Diagnosis Age", ylab = "Overall Survival (Months)")
 
-# Remover linhas com valores NA se existir
-dados_heatmap <- na.omit(dados_heatmap)
+# Adicionar os centroides dos clusters ao gráfico
+points(kmeans_result$centers, col = 1:k, pch = 4, cex = 2)
 
-# Calcular a matriz de correlação
-correlation_matrix <- cor(dados_heatmap)
 
-# Criar o heatmap usando heatmaply
-install.packages("heatmaply")
-library(heatmaply)
-heatmaply(correlation_matrix, 
-          main = "Heatmap de Correlação",
-          xlab = "Variáveis",
-          ylab = "Variáveis",
-          symm = TRUE)
+# Criar intervalos de idade
+intervalos_idade <- cut(dados_cluster$Diagnosis.Age, breaks = c(0, 50, 60, 70, 80, 90, Inf),
+                        labels = c("0-50", "51-60", "61-70", "71-80", "81-90", "91+"))
 
+# Adicionar os intervalos de idade como uma nova coluna aos dados_cluster
+dados_cluster$Intervalos_Idade <- intervalos_idade
+
+# Reordenar os dados_cluster com base nos intervalos de idade
+dados_cluster <- dados_cluster[order(dados_cluster$Intervalos_Idade), ]
+
+# Remover a coluna de intervalos de idade após reordenar
+dados_cluster <- dados_cluster[, -ncol(dados_cluster)]
+
+
+library(pheatmap)
+
+# Definir nomes das linhas como NULL para que eles não apareçam
+rownames(dados_cluster) <- NULL
+
+# Criar heatmap 
+pheatmap(as.matrix(dados_cluster), 
+         cluster_rows = FALSE,  # Não agrupar as linhas
+         cluster_cols = FALSE,  # Não agrupar as colunas
+         border_color = NA,     # Remover bordas
+         color = colorRampPalette(c("blue", "white", "red"))(100),  # Esquema de cores personalizado
+         main = "Heatmap com Clusters, Intervalos de Meses e Idades"
+)
 
