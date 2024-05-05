@@ -2,14 +2,27 @@
 title: "Adenocarcinoma prostático"
 author: "Afonso Sá (pg54434), Armindo Machado (pg52170)"
 output:
-  html_document: default
+  html_document:
+    theme: cerulean
+    toc: true
+    toc_float: true
   pdf_document: default
+encoding: "UTF-8"
+editor_options:
+  markdown:
+    wrap: sentence
 ---
+
+```{=html}
 <style>
   p {
     text-align: justify;
   }
 </style>
+```
+```{r setup, include=FALSE, warning = FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 # Exploração inicial dos dados e análise de expressão diferencial e de enriquecimento
 
