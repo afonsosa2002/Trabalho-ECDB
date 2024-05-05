@@ -379,29 +379,88 @@ ggplot(dados_patient_limpo, aes(x = Overall.Survival..Months., y = Diagnosis.Age
   labs(title = "Gráfico de Regressão", x = "Sobrevivência Global (Meses)", y = "Idade do Diagnóstico")
 ```
 
-
 Clustering dos genes
 
 ```{r}
-#Seleciona apenas as colunas relevantes para o clustering
-dados_cluster <- dados_patient_limpo[, c("Diagnosis.Age", "Overall.Survival..Months.")]
+# Ler o arquivo de texto com read.delim
+dados_genes <- read.delim("C:/Users/afons/Downloads/Structural_Variant_Genes.txt", header = TRUE)
 
-#Remove as linhas com valores NA, se houver
-dados_cluster <- na.omit(dados_cluster)
+# Visualizar as primeiras linhas do conjunto de dados
+head(dados_genes)
 
-#Aplica o algoritmo de clustering (k-means)
-k <- 5
-kmeans_result <- kmeans(dados_cluster, centers = k)
+# Obter informações sobre a estrutura do conjunto de dados
+str(dados_genes)
 
-#Verifica os resultados
-kmeans_result
+# Resumo estatístico do conjunto de dados
+summary(dados_genes)
 
-#Gráfico de dispersão dos clusters
-plot(dados_cluster, col = kmeans_result$cluster, pch = 20, main = "Clusters gerados pelo K-means",
-     xlab = "Diagnosis Age", ylab = "Overall Survival (Months)")
+# Carregar o pacote ggplot2
+library(ggplot2)
 
-#Adiciona os centroides dos clusters ao gráfico
-points(kmeans_result$centers, col = 1:k, pch = 4, cex = 2)
+# Selecionar apenas os top 20 genes
+dados_top20 <- dados_genes[1:20, c("Gene", "X..Structural.Variant")]
+
+# Remover linhas com valores NA se houver
+dados_top20 <- na.omit(dados_top20)
+
+# Aplicar o algoritmo de clustering (k-means)
+k <- 4  # Número de clusters desejado
+set.seed(123) 
+kmeans_result <- kmeans(dados_top20$X..Structural.Variant, centers = k)
+
+# Adicionar os resultados do k-means aos dados originais
+dados_top20$cluster <- as.factor(kmeans_result$cluster)
+
+# Criar o gráfico de dispersão com os clusters destacados por cores
+grafico_clusters <- ggplot(dados_top20, aes(x = Gene, y = X..Structural.Variant, color = cluster)) +
+  geom_point() +
+  labs(title = "Clusters dos Top 20 Genes",
+       x = "Gene",
+       y = "X..Structural.Variant") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_color_discrete(name = "Cluster")  # Definir legenda para as cores dos clusters
+
+# Exibir o gráfico
+print(grafico_clusters)
+```
+
+Clustering dos genes mutados
+
+```{r}
+# Ler o arquivo de texto com read.delim
+dados_mutados <- read.delim("C:/Users/afons/Downloads/Mutated_Genes.txt", header = TRUE)
+
+# Visualizar as primeiras linhas do conjunto de dados
+head(dados_mutados)
+
+# Obter informações sobre a estrutura do conjunto de dados
+str(dados_mutados)
+
+# Resumo estatístico do conjunto de dados
+summary(dados_mutados)
+
+# Selecionar apenas os top 20 genes mutados
+dados_mutados_top20 <- dados_mutados[1:20, ]
+
+# Aplicar o algoritmo de clustering (k-means)
+k <- 4  # Número de clusters desejado
+set.seed(123)  
+kmeans_result <- kmeans(dados_mutados_top20$X..Mut, centers = k)
+
+# Adicionar os resultados do k-means aos dados originais
+dados_mutados_top20$cluster <- as.factor(kmeans_result$cluster)
+
+# Criar o gráfico de dispersão com os clusters destacados por cores
+grafico_clusters_mutados_top20 <- ggplot(dados_mutados_top20, aes(x = Gene, y = X..Mut, color = cluster)) +
+  geom_point() +
+  labs(title = "Clusters dos Top 20 Genes Mutados",
+       x = "Gene",
+       y = "X..Mut") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_color_discrete(name = "Cluster")  # Definir legenda para as cores dos clusters
+
+# Exibir o gráfico
+print(grafico_clusters_mutados_top20)
 ```
 
 
