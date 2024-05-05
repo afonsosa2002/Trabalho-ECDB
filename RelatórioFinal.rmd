@@ -247,6 +247,10 @@ ggplot(dados_patient_limpo, aes(x = Overall.Survival..Months., y = Diagnosis.Age
   geom_smooth(method = "lm", col = "red") +
   labs(title = "Gráfico de Regressão", x = "Sobrevivência Global (Meses)", y = "Idade do Diagnóstico")
 ```
+
+
+#Clustering dos genes
+
 # Selecionar apenas as colunas relevantes para o clustering
 dados_cluster <- dados_patient_limpo[, c("Diagnosis.Age", "Overall.Survival..Months.")]
 
@@ -296,3 +300,7 @@ pheatmap(as.matrix(dados_cluster),
          main = "Heatmap com Clusters, Intervalos de Meses e Idades"
 )
 
+
+
+
+# análise preditiva/ aprendizagem máquina
