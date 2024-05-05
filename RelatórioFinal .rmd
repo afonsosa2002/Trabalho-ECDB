@@ -108,26 +108,26 @@ A função GDCquery() é utilizada para realizar a query à base dados. Nesta fu
 A função GDCdownload() é utilizada para realizar o download dos dados consoante a query realizada e estabelecida na função anterior
 
 ```{r, GDC}
-#retorna a classe do objeto (tipo de dados ou a estrutura de dados que o objeto representa, o que por sua vez determina quais funções podem ser aplicadas a ele)
+#Retorna a classe do objeto (tipo de dados ou a estrutura de dados que o objeto representa, o que por sua vez determina quais funções podem ser aplicadas a ele)
 class(rna_seq_PRAD)
-#retorna as dimensões do objeto(matriz ou um dataframe;objeto mais complexo)
+#Retorna as dimensões do objeto(matriz ou um dataframe;objeto mais complexo)
 dim(rna_seq_PRAD)
-# Visualizar informações básicas do conjunto de dados
+#Visualizar informações básicas do conjunto de dados
 metadata(rna_seq_PRAD)
 
 rownames(rna_seq_PRAD)
 colnames(rna_seq_PRAD)
 
-#extrair componentes de um objeto por nome (através de colunas)
+#Extrair componentes de um objeto por nome (através de colunas)
 rna_seq_PRAD$paper_BCR
 rna_seq_PRAD$paper_Gender
 rna_seq_PRAD$paper_Grade
 
-#atribui a um novo objeto chamado meta_PRAD, os metadados associados ao conjunto de dados rna_seq_PRAD
+#Atribui a um novo objeto chamado meta_PRAD, os metadados associados ao conjunto de dados rna_seq_PRAD
 meta_PRAD = colData(rna_seq_PRAD)
-#retorna as dimensões dos metadados 
+#Retorna as dimensões dos metadados 
 dim(meta_PRAD)
-#extrair componentes de um objeto por nome (através de colunas)
+#Extrair componentes de um objeto por nome (através de colunas)
 meta_PRAD$patient
 meta_PRAD$paper_IDH.status
 ```
@@ -135,18 +135,18 @@ meta_PRAD$paper_IDH.status
 Extração dos Metadados
 
 ```{r}
-# Extrair metadados relacionados com as linhas
+#Extrair metadados relacionados com as linhas
 row_metadados <- SummarizedExperiment::rowData(rna_seq_PRAD)[1:10, c('type', 'gene_type', 'gene_name')]
 
-# Atribuir a um novo objeto chamado meta_PRAD, os metadados associados aos dados de expressão
+#Atribuir a um novo objeto chamado meta_PRAD, os metadados associados aos dados de expressão
 amostras_metadados <- colData(rna_seq_PRAD)
 class(amostras_metadados)
 dim(amostras_metadados)
 colnames(amostras_metadados)
 
-# Código utilizado para extrair a informação relacionada à contagem da expressão dos genes do objeto rna_seq_PRAD
+#Código utilizado para extrair a informação relacionada à contagem da expressão dos genes do objeto rna_seq_PRAD
 geneExp <- SummarizedExperiment::assay(rna_seq_PRAD)
-# Para ver os outliers - no nosso caso é zero
+#Para ver os outliers - no nosso caso é zero
 pre <- TCGAanalyze_Preprocessing(rna_seq_PRAD) # Faz correlação e tenta identificar outliers
 dim(geneExp)
 dim(pre)
@@ -174,37 +174,37 @@ meta_PRAD = colData(rna_seq_PRAD)
 #Os metadados são convertidos em um dataframe para facilitar a manipulação
 meta_PRAD = as.data.frame(meta_PRAD)
 
-#retorna as dimensões dos metadados 
+#Retorna as dimensões dos metadados 
 dim(meta_PRAD)
 #Ver nomes das colunas
 colnames(meta_PRAD)
-#nomes das linhas
+#Nomes das linhas
 names(meta_PRAD)
-#extrair componentes de um objeto por nome (através de colunas)
+#Extrair componentes de um objeto por nome (através de colunas)
 meta_PRAD$patient
 
-# Criar vetor lógico em que diz que linhas possuem grade diferente de NA
+#Criar vetor lógico em que diz que linhas possuem grade diferente de NA
 coluna <- !is.na(meta_PRAD$definition)
 
-# Selecionar apenas as linhas que têm grade
+#Selecionar apenas as linhas que têm grade
 meta <- meta_PRAD[coluna, c("definition", "age_at_diagnosis", "disease_type")]
 meta$disease_type
 
-# Confirmar que os pacientes selecionados têm um valor de grade atribuído na tabela de metadados original
+#Confirmar que os pacientes selecionados têm um valor de grade atribuído na tabela de metadados original
 table(meta_PRAD[rownames(meta), "paper_tumor_grade"]) 
 head(meta) 
 
-# Verificação da dimensão do dataframe meta após seleção de apenas as linhas com informação relativa ao grade
+#Verificação da dimensão do dataframe meta após seleção de apenas as linhas com informação relativa ao grade
 sum(table(meta_PRAD$definition))
 dim(meta_PRAD)
 
-# Criação do dataframe de expressão apenas para os pacientes com informação relativa ao grade
+#Criação do dataframe de expressão apenas para os pacientes com informação relativa ao grade
 exp_grade <- geneExp[, rownames(meta)]
 dim(exp_grade)
 
-# Nomes das linhas
+#Nomes das linhas
 names(meta_PRAD)
-# Extrair componentes de um objeto por nome (através de colunas)
+#Extrair componentes de um objeto por nome (através de colunas)
 meta_PRAD$patient
 meta_PRAD$initial_weight
 ```
@@ -216,30 +216,30 @@ A análise de expressão diferencial é crucial para entender as mudanças na ex
 ```{r, deseq2}
 library(DESeq2) # DESeq2, uma ferramenta para análise de expressão diferencial de dados de contagem de sequenciamento de RNA (RNA-Seq)
 
-# Filtra os dados de RNA para incluir apenas amostras não nulas
+#Filtra os dados de RNA para incluir apenas amostras não nulas
 data_de <- rna_seq_PRAD[, !is.na(rna_seq_PRAD$colData$vital_status)]
 table(as.data.frame(metadata_matriz_clean$vital_status))
 
 countData <- assays(data_de)
-# Cria um objeto DESeqDataSet para análise, especificando um design experimental que compara o status vital
+#Cria um objeto DESeqDataSet para análise, especificando um design experimental que compara o status vital
 ddsSE <- DESeqDataSetFromMatrix(countData = countData, 
                                 colData = colData(data_de), 
                                 design = ~ vital_status)
-# Filtragem de Genes: Remove genes com contagens baixas (menos de 10) para melhorar a confiabilidade da análise de expressão diferencial.
+#Filtragem de Genes: Remove genes com contagens baixas (menos de 10) para melhorar a confiabilidade da análise de expressão diferencial.
 keep <- rowSums(counts(ddsSE)) >= 10
 ddsSE <- ddsSE[keep,]
 
-# Executa a análise de expressão diferencial com a função DESeq
+#Executa a análise de expressão diferencial com a função DESeq
 ddsSE <- DESeq(ddsSE)
 
-# Visualizar nomes dos resultados disponíveis
+#Visualizar nomes dos resultados disponíveis
 resultsNames(ddsSE)
 
-# Obter e visualizar resultados da comparação de interesse
+#Obter e visualizar resultados da comparação de interesse
 res <- results(ddsSE)
 dea <- as.data.frame(res)
 
-# Resumir os resultados para obter uma visão geral dos achados estatísticos, como o número de genes significativamente diferencialmente expressos
+#Resume os resultados para obter uma visão geral dos achados estatísticos, como o número de genes significativamente diferencialmente expressos
 summary(res)
 ```
 
@@ -250,20 +250,20 @@ Dados clínicos são essenciais para complementar as análises genômicas, permi
 
 ```{r, TCGAbiolinks}
 
-#buscar dados clínicos do projeto TCGA-PRAD (adenocarcinoma prostático), especificamente suplementos clínicos, através de GDCquery
+#Buscar dados clínicos do projeto TCGA-PRAD (adenocarcinoma prostático), especificamente suplementos clínicos, através de GDCquery
 query_clin <- GDCquery(project = "TCGA-PRAD", 
                        data.category = "Clinical",
                        data.type = "Clinical Supplement",
                        data.format = "BCR Biotab")
 
-# Baixa e prepara os dados clínicos
+#Baixa e prepara os dados clínicos
 GDCdownload(query_clin)
 clinical.PRAD <- GDCprepare(query_clin)
 
-# Listar os nomes dos componentes do objeto
+#Listar os nomes dos componentes do objeto
 names(clinical.PRAD)
 
-# Verificar os dados clínicos disponíveis
+#Verificar os dados clínicos disponíveis
 head(clinical.PRAD)
 
 
@@ -272,7 +272,7 @@ head(clinical.PRAD)
 ## Análise Adicional com Dados Clínicos e de Amostra 
 
 ```{r, include=FALSE}
-# Verifica se o ggplot2 está instalado, senão, instala
+#Verifica se o ggplot2 está instalado, senão, instala
 if (!requireNamespace("ggplot2", quietly = TRUE)) {
   install.packages("ggplot2")
 }
@@ -282,15 +282,15 @@ library(ggplot2)
 Carregamento e limpeza dos dados clínicos e de amostra:
 
 ```{r}
-# Carrega dados de um arquivo de texto em um formato de dataframe.
+#Carrega dados de um arquivo de texto em um formato de dataframe.
 dados_sample <- read.delim("C:/Users/armin/OneDrive/Ambiente de Trabalho/dataset/data_clinical_sample.txt", header = TRUE, stringsAsFactors = FALSE)
 dados_patient <- read.delim("C:/Users/armin/OneDrive/Ambiente de Trabalho/dataset/data_clinical_patient.txt", header = TRUE, stringsAsFactors = FALSE)
 
-# Criação de novos conjuntos de dados removendo as primeiras 4 linhas dos conjuntos originais.
+#Criação de novos conjuntos de dados removendo as primeiras 4 linhas dos conjuntos originais.
 dados_sample_limpo <- dados_sample[-c(1:4), ]
 dados_patient_limpo <- dados_patient[-c(1:4), ]
 
-# Conversão do conjunto de dados para o tipo de dados numéricos.
+#Conversão do conjunto de dados para o tipo de dados numéricos.
 dados_patient_limpo$Overall.Survival..Months. <- as.numeric(as.character(dados_patient_limpo$Overall.Survival..Months.))
 dados_patient_limpo$Diagnosis.Age <- as.numeric(as.character(dados_patient_limpo$Diagnosis.Age))
 dados_sample_limpo$MSI.MANTIS.Score <- as.numeric(dados_sample_limpo$MSI.MANTIS.Score)
@@ -301,15 +301,15 @@ dados_sample_limpo$TMB..nonsynonymous. <- as.numeric(dados_sample_limpo$TMB..non
 Visualização inicial dos dados:
 
 ```{r}
-# Visualizar os primeiros registros do conjunto de dados.
+#Visualizar os primeiros registros do conjunto de dados.
 head(dados_sample_limpo)
 head(dados_patient_limpo)
 
-# Obter informações sobre a estrutura do conjunto de dados.
+#Obter informações sobre a estrutura do conjunto de dados.
 str(dados_sample_limpo)
 str(dados_patient_limpo)
 
-# Resumo estatístico do conjunto de dados.
+#Resumo estatístico do conjunto de dados.
 summary(dados_sample_limpo)
 summary(dados_patient_limpo)
 ```
@@ -333,15 +333,15 @@ boxplot(meta_PRAD$age_at_diagnosis ~ meta_PRAD$definition, horizontal = TRUE)
 
 
 ```{r}
-# Cria um gráfico de dispersão relacionando o MSI e o TMB.
+#Cria um gráfico de dispersão relacionando o MSI e o TMB.
 ggplot(dados_sample_limpo, aes(x = MSI.MANTIS.Score, y = TMB..nonsynonymous.)) +
   geom_point() +
   labs(title = "Relação entre MSI e TMB", x = "Score MSI", y = "Score TMB")
 
-# Calcular o coeficiente de correlação de Pearson.
+#Calcula o coeficiente de correlação de Pearson.
 correlation1 <- cor(dados_sample_limpo$MSI.MANTIS.Score, dados_sample_limpo$TMB..nonsynonymous.)
 
-# Exibir o valor da correlação.
+#Exibe o valor da correlação.
 print(correlation1)
 ```
 
@@ -349,19 +349,19 @@ print(correlation1)
 Análise de sobrevivência e correlação:
 
 ```{r}
-# Verificar valores únicos na coluna Overall.Survival.Status.
+#Verifica valores únicos na coluna Overall.Survival.Status.
 unique(dados_patient_limpo$Overall.Survival.Status)
 
-# Convertendo estados de sobrevivência para numéricos.
+#Converte os estados de sobrevivência para numéricos.
 dados_patient_limpo$Overall.Survival.Status <- ifelse(dados_patient_limpo$Overall.Survival.Status == "LIVING", 0, 1)
 
-# Ajustar a curva de sobrevivência de Kaplan-Meier.
+#Ajusta a curva de sobrevivência de Kaplan-Meier.
 library(survival)
 library(survminer)
 surv_obj <- Surv(dados_patient_limpo$Overall.Survival..Months., dados_patient_limpo$Overall.Survival.Status)
 surv_fit <- survfit(surv_obj ~ 1)
 
-# Traçar a curva de sobrevivência.
+#Traça a curva de sobrevivência.
 ggsurvplot(surv_fit, data = dados_patient_limpo, risk.table = TRUE, xlab = "Tempo (Meses)", ylab = "Probabilidade de Sobrevivência", title = "Curva de Sobrevivência")
 ```
 
@@ -369,10 +369,10 @@ ggsurvplot(surv_fit, data = dados_patient_limpo, risk.table = TRUE, xlab = "Temp
 Análise de regressão linear:
 
 ```{r}
-# Ajustar o modelo de regressão linear.
+#Ajusta o modelo de regressão linear.
 modelo <- lm(Diagnosis.Age ~ Overall.Survival..Months., data = dados_patient_limpo)
 
-# Criar o gráfico de dispersão com a linha de regressão.
+#Cria o gráfico de dispersão com a linha de regressão.
 ggplot(dados_patient_limpo, aes(x = Overall.Survival..Months., y = Diagnosis.Age)) +
   geom_point() +
   geom_smooth(method = "lm", col = "red") +
@@ -383,29 +383,29 @@ ggplot(dados_patient_limpo, aes(x = Overall.Survival..Months., y = Diagnosis.Age
 Clustering dos genes
 
 ```{r}
-# Selecionar apenas as colunas relevantes para o clustering
+#Seleciona apenas as colunas relevantes para o clustering
 dados_cluster <- dados_patient_limpo[, c("Diagnosis.Age", "Overall.Survival..Months.")]
 
-# Remover linhas com valores NA se houver
+#Remove as linhas com valores NA, se houver
 dados_cluster <- na.omit(dados_cluster)
 
-# Aplicar o algoritmo de clustering (k-means)
+#Aplica o algoritmo de clustering (k-means)
 k <- 5
 kmeans_result <- kmeans(dados_cluster, centers = k)
 
-# Verificar os resultados
+#Verifica os resultados
 kmeans_result
 
-# Gráfico de dispersão dos clusters
+#Gráfico de dispersão dos clusters
 plot(dados_cluster, col = kmeans_result$cluster, pch = 20, main = "Clusters gerados pelo K-means",
      xlab = "Diagnosis Age", ylab = "Overall Survival (Months)")
 
-# Adicionar os centroides dos clusters ao gráfico
+#Adiciona os centroides dos clusters ao gráfico
 points(kmeans_result$centers, col = 1:k, pch = 4, cex = 2)
 ```
 
 
-Heatmap
+
 
 
 
