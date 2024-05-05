@@ -302,21 +302,27 @@ pheatmap(as.matrix(dados_cluster),
 
 
 
+dados_teste$Diagnosis.Age <- as.numeric(dados_teste$Diagnosis.Age)
 
-# análise preditiva/ aprendizagem máquina
-
-dados <- dados_patient[, c("Diagnosis.Age", "Overall.Survival..Months.")]
-
-set.seed(123) # Define a semente para reproducibilidade
-indices_treino <- sample(1:nrow(dados), 0.8 * nrow(dados))
-dados_treino <- dados[indices_treino, ]
-dados_teste <- dados[-indices_treino, ]
-
-
-#Remover linhas com valores NA
-dados_treino <- dados_treino[complete.cases(dados_treino), ]
-
-dados_treino$Diagnosis.Age <- as.numeric(dados_treino$Diagnosis.Age)
-dados_treino$Overall.Survival..Months. <- as.numeric(dados_treino$Overall.Survival..Months.)
-# Treinar o modelo de regressão linear
+# Ajustar o modelo de regressão linear
 modelo_regressao <- lm(Overall.Survival..Months. ~ Diagnosis.Age, data = dados_treino)
+
+# Ajustar o modelo de árvore de decisão
+modelo_arvore <- rpart(Overall.Survival..Months. ~ Diagnosis.Age, data = dados_treino)
+
+# Prever com ambos os modelos nos dados de teste
+predicoes_regressao <- predict(modelo_regressao, newdata = dados_teste)
+predicoes_arvore <- predict(modelo_arvore, newdata = dados_teste)
+
+# Calcular métricas de avaliação para o modelo de regressão linear
+auc_regressao <- roc(dados_teste$Overall.Survival..Months., predicoes_regressao)
+auc_regressao <- auc(auc_regressao)
+
+# Calcular métricas de avaliação para o modelo de árvore de decisão
+auc_arvore <- roc(dados_teste$Overall.Survival..Months., predicoes_arvore)
+auc_arvore <- auc(auc_arvore)
+
+# Comparar os resultados
+print(paste("AUC do modelo de regressão linear:", auc_regressao))
+print(paste("AUC do modelo de árvore de decisão:", auc_arvore))
+
