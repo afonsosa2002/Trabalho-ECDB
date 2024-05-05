@@ -271,21 +271,6 @@ plot(dados_cluster, col = kmeans_result$cluster, pch = 20, main = "Clusters gera
 # Adicionar os centroides dos clusters ao gráfico
 points(kmeans_result$centers, col = 1:k, pch = 4, cex = 2)
 
-
-# Criar intervalos de idade
-intervalos_idade <- cut(dados_cluster$Diagnosis.Age, breaks = c(0, 50, 60, 70, 80, 90, Inf),
-                        labels = c("0-50", "51-60", "61-70", "71-80", "81-90", "91+"))
-
-# Adicionar os intervalos de idade como uma nova coluna aos dados_cluster
-dados_cluster$Intervalos_Idade <- intervalos_idade
-
-# Reordenar os dados_cluster com base nos intervalos de idade
-dados_cluster <- dados_cluster[order(dados_cluster$Intervalos_Idade), ]
-
-# Remover a coluna de intervalos de idade após reordenar
-dados_cluster <- dados_cluster[, -ncol(dados_cluster)]
-
-
 library(pheatmap)
 
 # Definir nomes das linhas como NULL para que eles não apareçam
