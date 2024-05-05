@@ -165,10 +165,10 @@ head(clinical.PRAD)
 
 ```
 
-## Análise Adicional com Dados Clínicos e de Amostra (Afonso- foi revisto para nao "alterar" o html, sem tempo para mais...)
+## Análise Adicional com Dados Clínicos e de Amostra 
 
 ```{r, include=FALSE}
-# Checa se o ggplot2 está instalado, senão, instala
+# Verifica se o ggplot2 está instalado, senão, instala
 if (!requireNamespace("ggplot2", quietly = TRUE)) {
   install.packages("ggplot2")
 }
