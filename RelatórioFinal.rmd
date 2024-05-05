@@ -293,10 +293,10 @@ rownames(dados_cluster) <- NULL
 
 # Criar heatmap 
 pheatmap(as.matrix(dados_cluster), 
-         cluster_rows = FALSE,  # Não agrupar as linhas
-         cluster_cols = FALSE,  # Não agrupar as colunas
-         border_color = NA,     # Remover bordas
-         color = colorRampPalette(c("blue", "white", "red"))(100),  # Esquema de cores personalizado
+         cluster_rows = FALSE,  
+         cluster_cols = FALSE,  
+         border_color = NA,    
+         color = colorRampPalette(c("blue", "white", "red"))(100),  
          main = "Heatmap com Clusters, Intervalos de Meses e Idades"
 )
 
