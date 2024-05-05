@@ -260,4 +260,22 @@ kmeans_result <- kmeans(dados_cluster, centers = k)
 # Verificar os resultados
 kmeans_result
 
+# Selecionar apenas as colunas relevantes para o heatmap
+dados_heatmap <- dados_patient_limpo[, c("Diagnosis.Age", "Overall.Survival..Months.")]
+
+# Remover linhas com valores NA se existir
+dados_heatmap <- na.omit(dados_heatmap)
+
+# Calcular a matriz de correlação
+correlation_matrix <- cor(dados_heatmap)
+
+# Criar o heatmap usando heatmaply
+install.packages("heatmaply")
+library(heatmaply)
+heatmaply(correlation_matrix, 
+          main = "Heatmap de Correlação",
+          xlab = "Variáveis",
+          ylab = "Variáveis",
+          symm = TRUE)
+
 
