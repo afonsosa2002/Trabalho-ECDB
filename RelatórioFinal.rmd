@@ -82,7 +82,7 @@ query_PRAD <- GDCquery(
   project = "TCGA-PRAD",
   data.category = "Transcriptome Profiling", 
   data.type = "Gene Expression Quantification",
-  workflow.type = "HTSeq - Counts"
+  workflow.type = "STAR - Counts"
 )
 
 GDCdownload(query = query_PRAD)
