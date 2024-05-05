@@ -1,6 +1,6 @@
 ---
 title: "Adenocarcinoma prostático"
-author: "Diogo Esteves (PG28935)"
+author: "Afonso Sá (pg54434), Armindo Machado (pg52170)"
 output:
   html_document: default
   pdf_document: default
