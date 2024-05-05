@@ -407,19 +407,8 @@ points(kmeans_result$centers, col = 1:k, pch = 4, cex = 2)
 
 Heatmap
 
-```{r}
-# Definir nomes das linhas como NULL para que eles não apareçam
-rownames(dados_cluster) <- NULL
 
-# Criar heatmap 
-pheatmap(as.matrix(dados_cluster), 
-         cluster_rows = FALSE,  
-         cluster_cols = FALSE,  
-         border_color = NA,    
-         color = colorRampPalette(c("blue", "white", "red"))(100),  
-         main = "Heatmap com Clusters, Intervalos de Meses e Idades"
-)
-```
+
 
 
 
