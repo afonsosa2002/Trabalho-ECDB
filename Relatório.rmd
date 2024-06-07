@@ -3,7 +3,7 @@ title: "Adenocarcinoma prostático"
 author: "Afonso Sá (pg54434), Armindo Machado (pg52170)"
 output:
   html_document:
-    theme: cerulean
+    theme: 
     toc: true
     toc_float: true
   pdf_document: default
