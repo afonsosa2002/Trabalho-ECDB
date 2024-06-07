@@ -3,22 +3,15 @@ title: "Adenocarcinoma prostático"
 author: "Afonso Sá (pg54434), Armindo Machado (pg52170)"
 output:
   html_document:
-    theme: 
+    theme: cerulean
     toc: true
     toc_float: true
   pdf_document: default
 encoding: "UTF-8"
 editor_options:
   markdown:
-    wrap: sentence
----
+    wrap: auto
 
-```{=html}
-<style>
-  p {
-    text-align: justify;
-  }
-</style>
 ```
 ```{r setup, include=FALSE, warning = FALSE, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
